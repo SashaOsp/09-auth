@@ -1,9 +1,8 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { fetchNotes } from "@/lib/api";
-import { useDebouncedCallback } from "use-debounce";
 import SearchBox from "@/components/SearchBox/SearchBox";
 import Pagination from "@/components/Pagination/Pagination";
 import NoteList from "@/components/NoteList/NoteList";
@@ -15,27 +14,33 @@ type Props = {
 };
 
 export default function NotesClient({ tag }: Props) {
-  const [note, setNote] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["notes", note, currentPage, tag],
+    queryKey: ["notes", debouncedQuery, currentPage, tag],
     queryFn: () =>
-      fetchNotes(note, currentPage, tag === "all" ? "" : (tag ?? "")),
+      fetchNotes(debouncedQuery, currentPage, tag === "all" ? "" : (tag ?? "")),
     placeholderData: keepPreviousData,
   });
-
-  const debouncedSearch = useDebouncedCallback((value: string) => {
-    setNote(value);
-    setCurrentPage(1);
-  }, 300);
 
   const totalPages = data?.totalPages ?? 0;
 
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox onSearch={debouncedSearch} />
+        <SearchBox onSearch={setSearchQuery} />
+
         {totalPages > 1 && (
           <Pagination
             currentPage={currentPage}
@@ -43,9 +48,13 @@ export default function NotesClient({ tag }: Props) {
             onPageChange={setCurrentPage}
           />
         )}
+
         <Link href="/notes/action/create">Create note +</Link>
       </header>
-      {data && !isLoading && <NoteList notes={data.notes} />}
+
+      {isLoading && <p>Loading...</p>}
+
+      {data && <NoteList notes={data.notes} />}
     </div>
   );
 }
