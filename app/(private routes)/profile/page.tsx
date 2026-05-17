@@ -26,6 +26,9 @@ export default async function Profile() {
   const user = await getServerMe();
   console.log(user);
 
+  const avatarSrc =
+    user?.avatar || "https://ac.goit.global/fullstack/react/default-avatar.jpg";
+
   return (
     <main className={css.mainContent}>
       <div className={css.profileCard}>
@@ -37,10 +40,7 @@ export default async function Profile() {
         </div>
         <div className={css.avatarWrapper}>
           <Image
-            src={
-              `${user?.avatar}` ||
-              "https://ac.goit.global/fullstack/react/default-avatar.jpg"
-            }
+            src={avatarSrc}
             alt="User Avatar"
             width={120}
             height={120}
@@ -48,8 +48,8 @@ export default async function Profile() {
           />
         </div>
         <div className={css.profileInfo}>
-          <p>Username: {user.username || "User"}</p>
-          <p>Email: {user.email}</p>
+          <p>Username: {user?.username || "User"}</p>
+          <p>Email: {user?.email || "No email provided"}</p>
         </div>
       </div>
     </main>

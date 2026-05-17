@@ -1,4 +1,4 @@
-import { fetchNoteById } from "@/lib/api/clientApi";
+import { fetchServerSingleNote } from "@/lib/api/serverApi";
 import {
   dehydrate,
   HydrationBoundary,
@@ -15,7 +15,7 @@ export const generateMetadata = async ({
   params,
 }: Props): Promise<Metadata> => {
   const { id } = await params;
-  const note = await fetchNoteById(id);
+  const note = await fetchServerSingleNote(id);
 
   return {
     title: note.title,
@@ -43,7 +43,7 @@ export default async function Note(props: Props) {
 
   await queryClient.prefetchQuery({
     queryKey: ["note", id],
-    queryFn: () => fetchNoteById(id),
+    queryFn: () => fetchServerSingleNote(id),
   });
 
   return (
