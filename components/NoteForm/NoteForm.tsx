@@ -1,9 +1,9 @@
 "use client";
 
-import css from "./NoteForm.module.css";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createNote } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import css from "./NoteForm.module.css";
+import { createNote } from "@/lib/api/clientApi";
 import { useNoteStore } from "@/lib/store/noteStore";
 
 export default function NoteForm() {
@@ -13,10 +13,10 @@ export default function NoteForm() {
 
   const { draft, setDraft, clearDraft } = useNoteStore();
 
-  const mutation = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: createNote,
 
-    onSuccess() {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["notes"],
       });
@@ -30,7 +30,7 @@ export default function NoteForm() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    mutation.mutate({
+    mutate({
       title: draft.title,
       content: draft.content,
       tag: draft.tag,
@@ -48,6 +48,12 @@ export default function NoteForm() {
       ...draft,
       [name]: value,
     });
+  };
+
+  const handleCancel = () => {
+    clearDraft();
+
+    router.back();
   };
 
   return (
@@ -88,31 +94,24 @@ export default function NoteForm() {
           value={draft.tag}
           onChange={handleChange}
         >
-          <option value="Todo">Todo</option>
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Meeting">Meeting</option>
-          <option value="Shopping">Shopping</option>
+          {["Todo", "Work", "Personal", "Meeting", "Shopping"].map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
         </select>
       </div>
 
       <div className={css.actions}>
-        <button
-          type="submit"
-          className={css.submitButton}
-          disabled={mutation.isPending}
-        >
+        <button type="submit" className={css.submitButton} disabled={isPending}>
           Create note
         </button>
 
         <button
           type="button"
           className={css.cancelButton}
-          disabled={mutation.isPending}
-          onClick={() => {
-            clearDraft();
-            router.back();
-          }}
+          onClick={handleCancel}
+          disabled={isPending}
         >
           Cancel
         </button>
